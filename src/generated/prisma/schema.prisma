@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Cliente {
+  id      Int       @id
+  name    String?   @db.VarChar(30)
+  email   String?   @db.VarChar(50)
+  pedidos pedidos[]
+
+  @@map("clientes")
+}
+
+model Genres {
+  id   Int     @id
+  name String? @db.VarChar(100)
+
+  @@map("genres")
+}
+
+model Movie {
+  id           Int       @id
+  title        String?   @db.VarChar(100)
+  release_date DateTime? @db.Date
+  genre_id     Int?
+  language     String?   @db.VarChar(50)
+  oscar_count  Int?
+
+  @@map("movies")
+}
+
+model pedidos {
+  id         Int       @id @default(autoincrement())
+  cliente_id Int?
+  data       DateTime? @db.Date
+  valor      Decimal?  @db.Decimal(10, 2)
+  clientes   Cliente?  @relation(fields: [cliente_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
