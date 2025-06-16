@@ -8,34 +8,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Cliente {
-  id      Int       @id
-  name    String?   @db.VarChar(30)
-  email   String?   @db.VarChar(50)
-  pedidos pedidos[]
-  @@map("clientes")
+model genres {
+  id     Int      @id @default(autoincrement())
+  genre  String?  @db.VarChar(30)
+  movies movies[]
 }
 
-model Genres {
-  id   Int     @id
-  name String? @db.VarChar(100)
-  @@map("genres")
+model languages {
+  id       Int      @id @default(autoincrement())
+  language String?  @db.VarChar(30)
+  movies   movies[]
 }
 
-model Movie {
-  id           Int       @id
-  title        String?   @db.VarChar(100)
-  release_date DateTime? @db.Date
-  genre_id     Int?
-  language     String?   @db.VarChar(50)
+model movies {
+  id           Int        @id @default(autoincrement())
+  title        String?    @db.VarChar(100)
   oscar_count  Int?
-  @@map("movies")
-}
+  genre_id     Int?
+  language_id  Int?
+  release_date DateTime?  @db.Date
 
-model pedidos {
-  id         Int       @id @default(autoincrement())
-  cliente_id Int?
-  data       DateTime? @db.Date
-  valor      Decimal?  @db.Decimal(10, 2)
-  clientes   Cliente? @relation(fields: [cliente_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  genre        genres?    @relation(fields: [genre_id], references: [id], map: "fk_genre")
+  language     languages? @relation(fields: [language_id], references: [id], map: "fk_language")
 }
