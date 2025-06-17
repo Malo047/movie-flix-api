@@ -21,9 +21,19 @@ app.get("/movies", async (req, res) => {
 });
 
 app.post("/movies", async (req, res) => {
-    try{
-        const { title, release_date, genre_id, language_id, oscar_count} = req.body; //Aqui to desestruturando para receber os dados.
-        
+    try {
+        const { title, release_date, genre_id, language_id, oscar_count } = req.body; //Aqui to desestruturando para receber os dados.
+
+        const duplicatedTitle = await prisma.movies.findFirst({
+            where: {
+                title: {equals: title, mode: "insensitive"} ,  //Aqui verifica o titulo como um ignoreCase.
+            }
+        });
+        if (duplicatedTitle) {
+            res.status(409).send({message:"Filme já cadastrado."})
+            return
+        };
+
         await prisma.movies.create({
             data: {
                 title: title, //E aqui é como se fosse title do banco de dados recebe req.body.title que é o conteudo do JSON do body.
@@ -33,10 +43,10 @@ app.post("/movies", async (req, res) => {
                 oscar_count: oscar_count
             }
         });
-        res.status(201).send({message:"Filme cadastrado com sucesso."});
-    }catch (error){
+        res.status(201).send({ message: "Filme cadastrado com sucesso." });
+    } catch (error) {
         console.log(error)
-       res.status(500).send({message:"Erro ao cadastrar filme."});
+        res.status(500).send({ message: "Erro ao cadastrar filme." });
     }
 
 });
