@@ -19,23 +19,21 @@ app.get("/movies", async (req, res) => {
     });
     res.json(movies);
 });
-
-
-app.put("/movies/:id", async (req, res) =>{
+app.put("/movies/:id", async (req, res) => {
     const id = Number(req.params.id); // Transformando string que vem do req para number.
-    const data =  { ...req.body };
+    const data = { ...req.body };
     data.release_date = data.release_date ? new Date(data.release_date) : undefined; // Convertendo String para data se a data for válida.
 
     try {
         const movie = await prisma.movies.findUnique({
-            where:{
+            where: {
                 id: id,
             }
         });
 
-        if(!movie) {
-            res.status(404).send({message:"Filme não encontrado"});
-            return 
+        if (!movie) {
+            res.status(404).send({ message: "Filme não encontrado" });
+            return
         };
         await prisma.movies.update({
             where: {
@@ -43,11 +41,11 @@ app.put("/movies/:id", async (req, res) =>{
             },
             data: data,
         });
-        res.status(200).send({message:"Alterado com sucesso."})
+        res.status(200).send({ message: "Alterado com sucesso." })
 
     } catch (error) {
         console.log(error);
-        res.status(500).send({message:"Não foi possível alterar o filme."});
+        res.status(500).send({ message: "Não foi possível alterar o filme." });
         return
     }
 });
@@ -57,11 +55,11 @@ app.post("/movies", async (req, res) => {
 
         const duplicatedTitle = await prisma.movies.findFirst({
             where: {
-                title: {equals: title, mode: "insensitive"} ,  //Aqui verifica o titulo como um ignoreCase.
+                title: { equals: title, mode: "insensitive" },  //Aqui verifica o titulo como um ignoreCase.
             }
         });
         if (duplicatedTitle) {
-            res.status(409).send({message:"Filme já cadastrado."})
+            res.status(409).send({ message: "Filme já cadastrado." })
             return
         };
 
@@ -78,6 +76,33 @@ app.post("/movies", async (req, res) => {
     } catch (error) {
         console.log(error)
         res.status(500).send({ message: "Erro ao cadastrar filme." });
+    }
+
+});
+app.delete("/movies/:id", async (req, res) => {
+    const id = Number(req.params.id);
+
+    try {
+        const movie = await prisma.movies.findUnique({
+            where: {
+                id: id,
+            }
+        });
+
+        if(!movie){
+            res.status(404).send({message:"Filme não encontrado"});
+            return
+        };
+
+        await prisma.movies.delete({
+            where: {
+                id: id,
+            }
+        });
+        res.status(200).send({mwssage:"Filme deletado com sucesso."});
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({ message: "Erro ao deletar filme." })
     }
 
 });
