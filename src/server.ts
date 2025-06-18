@@ -20,6 +20,37 @@ app.get("/movies", async (req, res) => {
     res.json(movies);
 });
 
+
+app.put("/movies/:id", async (req, res) =>{
+    const id = Number(req.params.id); // Transformando string que vem do req para number.
+    const data =  { ...req.body };
+    data.release_date = data.release_date ? new Date(data.release_date) : undefined; // Convertendo String para data se a data for válida.
+
+    try {
+        const movie = await prisma.movies.findUnique({
+            where:{
+                id: id,
+            }
+        });
+
+        if(!movie) {
+            res.status(404).send({message:"Filme não encontrado"});
+            return 
+        };
+        await prisma.movies.update({
+            where: {
+                id: id,
+            },
+            data: data,
+        });
+        res.status(200).send({message:"Alterado com sucesso."})
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({message:"Não foi possível alterar o filme."});
+        return
+    }
+});
 app.post("/movies", async (req, res) => {
     try {
         const { title, release_date, genre_id, language_id, oscar_count } = req.body; //Aqui to desestruturando para receber os dados.
