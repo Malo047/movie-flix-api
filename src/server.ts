@@ -19,6 +19,36 @@ app.get("/movies", async (req, res) => {
     });
     res.json(movies);
 });
+app.get("/movies/:genreName", async (req, res) => {
+    //receber o nome do genero
+    //filtrar os filmes pelo genero
+    //retornar os filmes 
+    try {
+        const genre = req.params.genreName;
+        const moviesFilteredByGenerName =  await prisma.movies.findMany({
+            include:{
+                genre: true,
+                language: true
+            },
+            where: {
+                genre: {
+                    genre: {
+                        equals: genre,
+                        mode: "insensitive"
+                    },
+                },
+            }    
+        });
+        res.json(moviesFilteredByGenerName);
+        res.status(200);
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({message:"Não foi possivel conectar ao servidor."})
+    }
+    
+    
+});
 app.put("/movies/:id", async (req, res) => {
     const id = Number(req.params.id); // Transformando string que vem do req para number.
     const data = { ...req.body };
