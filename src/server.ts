@@ -1,11 +1,13 @@
 import { PrismaClient } from "./generated/prisma"; //Ele é a maneira como faço a conexão do meu banco de dados.
 import express from "express"; //Com ele crio as rotas para manipulação.
-
+import swaggerUi from "swagger-ui-express"
+import swaggerDocument from "../src/swagger.json"
 
 const port = 3000; //Define minha porta de serviço.
 const app = express(); //Instacio o express para usar.
 const prisma = new PrismaClient(); //Instancio o prisma para através dele manupular meu banco de dados.
 app.use(express.json()); //Aqui serve para o express aceitar um JSON para o corpo da requisição.
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.get("/movies", async (req, res) => {
     const movies = await prisma.movies.findMany({
