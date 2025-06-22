@@ -27,8 +27,8 @@ app.get("/movies/:genreName", async (req, res) => {
     //retornar os filmes 
     try {
         const genre = req.params.genreName;
-        const moviesFilteredByGenerName =  await prisma.movies.findMany({
-            include:{
+        const moviesFilteredByGenerName = await prisma.movies.findMany({
+            include: {
                 genre: true,
                 language: true
             },
@@ -39,17 +39,17 @@ app.get("/movies/:genreName", async (req, res) => {
                         mode: "insensitive"
                     },
                 },
-            }    
+            }
         });
         res.json(moviesFilteredByGenerName);
         res.status(200);
-        
+
     } catch (error) {
         console.log(error);
-        res.status(500).send({message:"Não foi possivel conectar ao servidor."})
+        res.status(500).send({ message: "Não foi possivel conectar ao servidor." })
     }
-    
-    
+
+
 });
 app.put("/movies/:id", async (req, res) => {
     const id = Number(req.params.id); // Transformando string que vem do req para number.
@@ -73,7 +73,7 @@ app.put("/movies/:id", async (req, res) => {
             },
             data: data,
         });
-        res.status(200).send({ message: "Alterado com sucesso." })
+        res.status(200).send({ message: "Alterado com sucesso." });
 
     } catch (error) {
         console.log(error);
@@ -121,8 +121,8 @@ app.delete("/movies/:id", async (req, res) => {
             }
         });
 
-        if(!movie){
-            res.status(404).send({message:"Filme não encontrado"});
+        if (!movie) {
+            res.status(404).send({ message: "Filme não encontrado" });
             return
         };
 
@@ -131,12 +131,37 @@ app.delete("/movies/:id", async (req, res) => {
                 id: id,
             }
         });
-        res.status(200).send({mwssage:"Filme deletado com sucesso."});
+        res.status(200).send({ mwssage: "Filme deletado com sucesso." });
     } catch (error) {
         console.log(error);
         res.status(500).send({ message: "Erro ao deletar filme." })
     }
 
+});
+app.put("/genres/:id", async (req, res) => {
+    const id = Number(req.params.id);
+    const data = { ...req.body }
+    try {
+        const movie = await prisma.movies.findUnique({
+            where: {
+                id: id
+            }
+        });
+        if (!movie) {
+            res.status(404).send({ message: "Filme não encontrado" });
+            return
+        };
+        await prisma.movies.update({
+            where: {
+                id: id
+            },
+            data: data
+        });
+        res.status(200).send({ message: "Alterado com sucesso." })
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({ message: "Não foi possivel fazer a alteração." })
+    }
 });
 //Aqui é para retornar no terminal quando estiver rodando meu servidor.
 app.listen(port, () => {
