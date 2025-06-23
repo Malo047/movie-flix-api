@@ -193,7 +193,7 @@ app.post("/genres", async (req, res) => {
         res.status(409).send({message: "Genêro já existe"});
         return
 
-    } catch (error) {
+    } catch {
         res.status(500).send({message: "Não foi possível cadastrar o genêro"});
         return
     }
@@ -209,6 +209,31 @@ app.get("/genres", async (_, res) => {
     }catch(error){
         console.log(error);
         res.status(500).send({message: "Não foi possível buscar a lista de genêros."});
+        return
+    }
+});
+app.delete("/genres/:id", async (req, res) =>{
+    const id = Number(req.params.id);
+
+    try{
+    const genre = await prisma.genres.findUnique({
+        where: {
+            id : id
+        }
+    });
+    if(!genre){
+        res.status(404).send({message:"Genêro não encontrado."});
+        return
+    }
+    await prisma.genres.delete({
+        where: {
+            id: id,
+        }
+    });
+    res.status(200).send({message: "Genêro deletado com sucesso."});
+    return
+    }catch{
+        res.status(500).send({message: "Não foi possível deletar o genêro."});
         return
     }
 });
