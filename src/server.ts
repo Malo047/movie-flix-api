@@ -9,7 +9,7 @@ const prisma = new PrismaClient(); //Instancio o prisma para através dele manup
 app.use(express.json()); //Aqui serve para o express aceitar um JSON para o corpo da requisição.
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-app.get("/movies", async (req, res) => {
+app.get("/movies", async (_, res) => {
     const movies = await prisma.movies.findMany({
         include: {
             genre: true,
@@ -20,13 +20,14 @@ app.get("/movies", async (req, res) => {
         }
     });
     res.json(movies);
+    return
 });
 app.get("/movies/:genreName", async (req, res) => {
     //receber o nome do genero
     //filtrar os filmes pelo genero
     //retornar os filmes 
     try {
-        const genre = req.params.genreName;
+        const newGenre = req.params.genreName;
         const moviesFilteredByGenerName = await prisma.movies.findMany({
             include: {
                 genre: true,
@@ -35,18 +36,19 @@ app.get("/movies/:genreName", async (req, res) => {
             where: {
                 genre: {
                     genre: {
-                        equals: genre,
+                        equals: newGenre,
                         mode: "insensitive"
                     },
                 },
             }
         });
-        res.json(moviesFilteredByGenerName);
-        res.status(200);
+        res.status(200).json(moviesFilteredByGenerName);
+        return
 
     } catch (error) {
         console.log(error);
-        res.status(500).send({ message: "Não foi possivel conectar ao servidor." })
+        res.status(500).send({ message: "Não foi possivel conectar ao servidor." });
+        return
     }
 
 
@@ -74,6 +76,7 @@ app.put("/movies/:id", async (req, res) => {
             data: data,
         });
         res.status(200).send({ message: "Alterado com sucesso." });
+        return
 
     } catch (error) {
         console.log(error);
@@ -105,9 +108,11 @@ app.post("/movies", async (req, res) => {
             }
         });
         res.status(201).send({ message: "Filme cadastrado com sucesso." });
+        return
     } catch (error) {
         console.log(error)
         res.status(500).send({ message: "Erro ao cadastrar filme." });
+        return
     }
 
 });
@@ -132,9 +137,11 @@ app.delete("/movies/:id", async (req, res) => {
             }
         });
         res.status(200).send({ mwssage: "Filme deletado com sucesso." });
+        return
     } catch (error) {
         console.log(error);
-        res.status(500).send({ message: "Erro ao deletar filme." })
+        res.status(500).send({ message: "Erro ao deletar filme." });
+        return
     }
 
 });
@@ -157,10 +164,52 @@ app.put("/genres/:id", async (req, res) => {
             },
             data: data
         });
-        res.status(200).send({ message: "Alterado com sucesso." })
+        res.status(200).send({ message: "Alterado com sucesso." });
+        return
     } catch (error) {
         console.log(error);
-        res.status(500).send({ message: "Não foi possivel fazer a alteração." })
+        res.status(500).send({ message: "Não foi possivel fazer a alteração." });
+        return
+    }
+});
+app.post("/genres", async (req, res) => {
+    const { newGenre } = req.body;
+
+    try {
+        const genre = await prisma.genres.findFirst({
+            where: {
+                genre: {equals:newGenre, mode: "insensitive"}
+            }
+        });
+        if(!genre){
+            await prisma.genres.create({
+                data: {
+                    genre: newGenre,
+                }
+            });
+            res.status(201).send({message: "Genêro cadastrado com sucesso."});
+            return
+        }
+        res.status(409).send({message: "Genêro já existe"});
+        return
+
+    } catch (error) {
+        res.status(500).send({message: "Não foi possível cadastrar o genêro"});
+        return
+    }
+});
+app.get("/genres", async (_, res) => {
+    try{
+    const allGenres = await prisma.genres.findMany({
+        orderBy: {
+            genre: "asc"
+        },
+    });
+    res.json(allGenres);
+    }catch(error){
+        console.log(error);
+        res.status(500).send({message: "Não foi possível buscar a lista de genêros."});
+        return
     }
 });
 //Aqui é para retornar no terminal quando estiver rodando meu servidor.
