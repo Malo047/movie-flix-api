@@ -10,17 +10,31 @@ app.use(express.json()); //Aqui serve para o express aceitar um JSON para o corp
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.get("/movies", async (_, res) => {
-    const movies = await prisma.movies.findMany({
-        include: {
-            genre: true,
-            language: true
-        },
-        orderBy: {
-            title: "asc"
-        }
-    });
-    res.json(movies);
-    return
+    try {
+
+        const totalMovies = await prisma.movies.count();
+        
+        const movies = await prisma.movies.findMany({
+            include: {
+                genre: true,
+                language: true
+            },
+            orderBy: {
+                title: "asc"
+            }
+        });
+      const averageDuration = movies.reduce((acc, movie) => acc + (movie.duration ?? 0) / totalMovies, 0);
+      const averageDurationRounded = Math.round(averageDuration);
+        
+        res.json({
+            totalMovies,
+            averageDurationRounded,
+            movies
+        });
+        return
+    } catch {
+        res.status(500).send({ message: "Não foi possível buscar os filmes." })
+    }
 });
 app.get("/movies/:genreName", async (req, res) => {
     //receber o nome do genero
@@ -178,62 +192,62 @@ app.post("/genres", async (req, res) => {
     try {
         const genre = await prisma.genres.findFirst({
             where: {
-                genre: {equals:newGenre, mode: "insensitive"}
+                genre: { equals: newGenre, mode: "insensitive" }
             }
         });
-        if(!genre){
+        if (!genre) {
             await prisma.genres.create({
                 data: {
                     genre: newGenre,
                 }
             });
-            res.status(201).send({message: "Genêro cadastrado com sucesso."});
+            res.status(201).send({ message: "Genêro cadastrado com sucesso." });
             return
         }
-        res.status(409).send({message: "Genêro já existe"});
+        res.status(409).send({ message: "Genêro já existe" });
         return
 
     } catch {
-        res.status(500).send({message: "Não foi possível cadastrar o genêro"});
+        res.status(500).send({ message: "Não foi possível cadastrar o genêro" });
         return
     }
 });
 app.get("/genres", async (_, res) => {
-    try{
-    const allGenres = await prisma.genres.findMany({
-        orderBy: {
-            genre: "asc"
-        },
-    });
-    res.json(allGenres);
-    }catch(error){
+    try {
+        const allGenres = await prisma.genres.findMany({
+            orderBy: {
+                genre: "asc"
+            },
+        });
+        res.json(allGenres);
+    } catch (error) {
         console.log(error);
-        res.status(500).send({message: "Não foi possível buscar a lista de genêros."});
+        res.status(500).send({ message: "Não foi possível buscar a lista de genêros." });
         return
     }
 });
-app.delete("/genres/:id", async (req, res) =>{
+app.delete("/genres/:id", async (req, res) => {
     const id = Number(req.params.id);
 
-    try{
-    const genre = await prisma.genres.findUnique({
-        where: {
-            id : id
+    try {
+        const genre = await prisma.genres.findUnique({
+            where: {
+                id: id
+            }
+        });
+        if (!genre) {
+            res.status(404).send({ message: "Genêro não encontrado." });
+            return
         }
-    });
-    if(!genre){
-        res.status(404).send({message:"Genêro não encontrado."});
+        await prisma.genres.delete({
+            where: {
+                id: id,
+            }
+        });
+        res.status(200).send({ message: "Genêro deletado com sucesso." });
         return
-    }
-    await prisma.genres.delete({
-        where: {
-            id: id,
-        }
-    });
-    res.status(200).send({message: "Genêro deletado com sucesso."});
-    return
-    }catch{
-        res.status(500).send({message: "Não foi possível deletar o genêro."});
+    } catch {
+        res.status(500).send({ message: "Não foi possível deletar o genêro." });
         return
     }
 });

@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
@@ -27,7 +27,7 @@ model movies {
   genre_id     Int?
   language_id  Int?
   release_date DateTime?  @db.Date
-
-  genre        genres?    @relation(fields: [genre_id], references: [id], map: "fk_genre")
-  language     languages? @relation(fields: [language_id], references: [id], map: "fk_language")
+  duration     Int?
+  genre        genres?    @relation(fields: [genre_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_genre")
+  language     languages? @relation(fields: [language_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_language")
 }
