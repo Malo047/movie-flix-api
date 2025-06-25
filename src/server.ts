@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client"; //Ele é a maneira como faço a conexão do meu banco de dados.
+import { PrismaClient, Prisma } from "@prisma/client"; //Ele é a maneira como faço a conexão do meu banco de dados.
 import express from "express"; //Com ele crio as rotas para manipulação.
 import swaggerUi from "swagger-ui-express"
 import swaggerDocument from "../src/swagger.json"
@@ -9,31 +9,44 @@ const prisma = new PrismaClient(); //Instancio o prisma para através dele manup
 app.use(express.json()); //Aqui serve para o express aceitar um JSON para o corpo da requisição.
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-app.get("/movies", async (_, res) => {
-    try {
+/* 
+1. Primeiro, extrai o valor de `sort` da string de consulta. Este é o critério que os usuários desejam usar para ordenar os filmes.
 
-        const totalMovies = await prisma.movies.count();
-        
+2. Em seguida, define a cláusula `orderBy` com base no valor de `sort`. Se `sort` for "title", a ordenação será por título. Se `sort` for "release_date", a ordenação será por data de lançamento. Se `sort` for um valor não suportado ou não definido, a ordenação será mantida como indefinida, o que significa que o Prisma irá usar a ordenação padrão.
+
+3. Depois, realiza a busca dos filmes no banco de dados usando o Prisma, passando a cláusula `orderBy` que acabamos de definir.
+
+4. Por fim, retorna a lista de filmes ao cliente. Se ocorrer um erro durante qualquer parte deste processo, retorna um erro 500 ao cliente.
+
+*/
+
+app.get("/movies/sort", async (req, res) => {
+    const { sort } = req.query;
+    console.log(sort);
+    let orderBy: Prisma.moviesOrderByWithRelationInput | Prisma.moviesOrderByWithRelationInput[] | undefined;
+    if (sort === "title") {
+        orderBy = {
+            title: "asc",
+        };
+    } else if (sort === "release_date") {
+        orderBy = {
+            release_date: "asc",
+        };
+    }
+
+    try {
         const movies = await prisma.movies.findMany({
+            orderBy,
             include: {
                 genre: true,
-                language: true
+                language: true,
             },
-            orderBy: {
-                title: "asc"
-            }
         });
-      const averageDuration = movies.reduce((acc, movie) => acc + (movie.duration ?? 0) / totalMovies, 0);
-      const averageDurationRounded = Math.round(averageDuration);
-        
-        res.json({
-            totalMovies,
-            averageDurationRounded,
-            movies
-        });
-        return
-    } catch {
-        res.status(500).send({ message: "Não foi possível buscar os filmes." })
+
+        res.json(movies);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Houve um problema ao buscar os filmes." });
     }
 });
 app.get("/movies/:genreName", async (req, res) => {
