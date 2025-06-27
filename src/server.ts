@@ -21,20 +21,30 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 */
 
 app.get("/movies", async (req, res) => {
-    try {
-        const movies = await prisma.movies.findMany({
-            orderBy: {
-                title: "asc"
-            },
-            include:{
-                genre: true,
-                language: true
+  const { language } = req.query;
+
+  try {
+    const movies = await prisma.movies.findMany({
+      where: language
+        ? {
+            language: {
+              language: {
+                equals: String(language),
+                mode: "insensitive"
+              }
             }
-        });
-        res.json(movies).status(200)
-    } catch {
-        res.status(500).send({message: "Não foi possível buscar os filmes."})
-    }
+          }
+        : {}, // se não tiver filtro, retorna todos
+      include: {
+        language: true
+      }
+    });
+
+    res.status(200).json(movies);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Erro ao buscar filmes." });
+  }
 });
 app.get("/movies/:genreName", async (req, res) => {
     //receber o nome do genero
