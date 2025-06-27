@@ -20,33 +20,20 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 */
 
-app.get("/movies/sort", async (req, res) => {
-    const { sort } = req.query;
-    console.log(sort);
-    let orderBy: Prisma.moviesOrderByWithRelationInput | Prisma.moviesOrderByWithRelationInput[] | undefined;
-    if (sort === "title") {
-        orderBy = {
-            title: "asc",
-        };
-    } else if (sort === "release_date") {
-        orderBy = {
-            release_date: "asc",
-        };
-    }
-
+app.get("/movies", async (req, res) => {
     try {
         const movies = await prisma.movies.findMany({
-            orderBy,
-            include: {
-                genre: true,
-                language: true,
+            orderBy: {
+                title: "asc"
             },
+            include:{
+                genre: true,
+                language: true
+            }
         });
-
-        res.json(movies);
-    } catch (error) {
-        console.error(error);
-        res.status(500).send({ message: "Houve um problema ao buscar os filmes." });
+        res.json(movies).status(200)
+    } catch {
+        res.status(500).send({message: "Não foi possível buscar os filmes."})
     }
 });
 app.get("/movies/:genreName", async (req, res) => {
